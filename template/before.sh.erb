@@ -7,3 +7,18 @@ port=$(find_port ${host})
 # Define a password and export it for RStudio authentication
 password="$(create_passwd 16)"
 export RSTUDIO_PASSWORD="${password}"
+
+# Figure out where we're going to store environments
+#if [ -d /work/LAS/${SLURM_JOB_ACCOUNT} ]; then
+#    export WORK_DIR=/work/LAS/${SLURM_JOB_ACCOUNT}
+#else
+    export WORK_DIR=${HOME}
+#fi
+export WORK_DIR=${HOME}
+export SINGULARITYENV_WORK_DIR=${WORK_DIR}
+
+<%-
+  require 'securerandom'
+  csrftoken = SecureRandom.uuid
+-%>
+export csrf_token="<%= csrftoken %>"
