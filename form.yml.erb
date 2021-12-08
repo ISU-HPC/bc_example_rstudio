@@ -1,0 +1,129 @@
+# Batch Connect app configuration file
+#
+# @note Used to define the submitted cluster, title, description, and
+#   hard-coded/user-defined attributes that make up this Batch Connect app.
+
+<%-
+  cmd = "/usr/bin/sinfo -ho %R"
+  begin
+    output, status = Open3.capture2e(cmd)
+    if status.success?
+      queues = output.split("\n").map(&:strip).reject(&:blank?).sort
+    else
+      raise output
+    end
+  rescue => e
+    queues = []
+    error = e.message.strip
+  end 
+-%>
+
+
+<%-
+  cmd1 = "/bin/whoami"
+  begin
+    username, status = Open3.capture2e(cmd1)
+    cmd2 = "/usr/bin/sacctmgr show assoc format=account -n where user=#{username}"
+    output, status = Open3.capture2e(cmd2)
+    if status.success?
+      accounts = output.split("\n").map(&:strip).reject(&:blank?).sort
+    else
+      raise output
+    end
+  rescue => e
+    accounts = []
+    error = e.message.strip
+  end
+-%>
+
+
+
+
+---
+
+# **MUST** set cluster id here that matches cluster configuration file located
+# under /etc/ood/config/clusters.d/*.yml
+# @example Use the Owens cluster at Ohio Supercomputer Center
+#     cluster: "owens"
+cluster: "slowpoke"
+
+# Define attribute values that aren't meant to be modified by the user within
+# the Dashboard form
+attributes:
+
+  slurm_account:
+    widget: select
+    label: "Account"
+    options:
+    <% `sacctmgr show -PQrn associations User=${USER} | cut -d '|' -f 2`.split("\n").each do |val| %>
+      - ["<%= val %>", "<%= val %>"]
+    <% end %>
+    required: true
+
+  custom_queue:
+    label: Queue
+    help: Select queue from the drop-down
+    <%- if error -%>
+      <span class="text-danger">Error when parsing queues:</span>
+      ```
+      <%= error.gsub("\n", "\n      ") %>
+      ```
+    <%- end -%>
+  <%- if queues.blank? -%>
+    widget: text_field
+  <%- else -%>
+    widget: select
+    options:
+    <%- queues.each do |q| -%>
+      - [ "<%= q %>", "<%= q %>" ]
+    <%- end -%>
+  <%- end -%> 
+
+  # Force single-node
+  bc_num_slots: "1"
+
+  num_cores:
+    widget: "number_field"
+    label: "Number of cores"
+    value: 1
+    help: |
+      Number of cores.
+    min: 0
+    max: 16
+    step: 1
+    id: 'num_cores'
+    required: true
+
+  version:
+    widget: "select"
+    label: "R Version"
+    options:
+      - ["4.1.0", "4.1.0"]
+      - ["4.0.5", "4.0.5"]
+      - ["3.6.3", "3.6.3"]
+
+  job_name:
+    label: "Job name"
+    help: "Name of job shown in queue"
+    value: "rstudio"
+    widget: text_field
+
+
+# All of the attributes that make up the Dashboard form (in respective order),
+# and made available to the submit configuration file and the template ERB
+# files
+#
+# @note You typically do not need to modify this unless you want to add a new
+#   configurable value
+# @note If an attribute listed below is hard-coded above in the `attributes`
+#   option, then it will not appear in the form page that the user sees in the
+#   Dashboard
+form:
+  - slurm_account
+  - custom_queue
+  - version
+  - num_cores
+  - bc_num_hours
+  - bc_num_slots
+  - job_name
+
