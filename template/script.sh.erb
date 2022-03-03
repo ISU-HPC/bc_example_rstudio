@@ -78,7 +78,6 @@ export RPROFILE_SITE="${TMPDIR}/Rprofile.site"
 (
 umask 077
 sed 's/^ \{2\}//' > "${RPROFILE_SITE}" << EOL
-  options(repos=structure(c(CRAN="https://mirror.las.iastate.edu/CRAN/")))
   setwd(Sys.getenv("WORK_DIR"))
 EOL
 )
@@ -89,13 +88,14 @@ set -x
 echo "Starting up rserver..."
 
 echo Hot wired
-RSTUDIO_SERVER_IMAGE=/reference/containers/RStudio/4.0.5/rocker-geospatial.sif
+RSTUDIO_SERVER_IMAGE=/reference/containers/RStudio/<%= context.version %>/rocker-geospatial.sif
+#RSTUDIO_SERVER_IMAGE=/reference/containers/RStudio/4.1.2/rocker_4.1.2.sif
+#-B ${RPROFILE_SITE}:/usr/local/lib/R/etc/Rprofile.site \
 
 singularity exec \
     -B $TMPDIR/var/lib:/var/lib/rstudio-server \
     -B $TMPDIR/var/run:/var/run/rstudio-server \
     -B $TMPDIR/tmp:/tmp \
-    -B ${RPROFILE_SITE}:/usr/local/lib/R/etc/Rprofile.site \
     "$RSTUDIO_SERVER_IMAGE" \
     rserver \
     --www-port "${port}" \
