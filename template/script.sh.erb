@@ -102,6 +102,7 @@ singularity exec \
     --auth-none 0 \
     --auth-pam-helper-path "${RSTUDIO_AUTH}" \
     --auth-encrypt-password 0 \
+    --server-user "${USER}" \
     --rsession-path "${RSESSION_WRAPPER_FILE}"
 
 echo 'Singularity as exited...'
