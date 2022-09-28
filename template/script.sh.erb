@@ -89,9 +89,6 @@ set -x
 # Launch the RStudio Server
 echo "Starting up rserver..."
 
-#echo Hot wired
-#RSTUDIO_SERVER_IMAGE=/shared/hpc/containers/Rstudio/4.0.5/rocker-geospatial.sif
-
 singularity exec \
     -B $TMPDIR/var/lib:/var/lib/rstudio-server \
     -B $TMPDIR/var/run:/var/run/rstudio-server \

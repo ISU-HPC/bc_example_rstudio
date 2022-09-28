@@ -37,3 +37,5 @@ script:
     - "--gres=gpu:1"
     <%- end -%>
     - "--job-name=<%= job_name %>"
+    - "--job-name=<%= job_name %>"
+    - "--qos=<%= slurm_qos %>"
