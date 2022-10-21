@@ -104,6 +104,8 @@ singularity exec \
     --auth-pam-helper-path "${RSTUDIO_AUTH}" \
     --auth-encrypt-password 0 \
     --server-user "${USER}" \
+    --auth-timeout-minutes=0 \
+    --auth-stay-signed-in-days=30 \
     --rsession-path "${RSESSION_WRAPPER_FILE}"
 
 echo 'Singularity as exited...'
