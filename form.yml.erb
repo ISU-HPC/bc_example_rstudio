@@ -7,6 +7,7 @@
         begin
         queues = File.readlines Dir.home + "/.slurm-partitions"
         accounts = File.readlines Dir.home + "/.slurm-accounts"
+        qos = File.readlines Dir.home + "/.slurm-qos"
         error = ""
         end
 -%>
@@ -109,11 +110,15 @@ attributes:
     label: "QOS"
     help: "Job QOS, only required for priority partitions"
     value: "400thread"
+  <%- if qos.blank? -%>
+    widget: text_field
+  <%- else -%>
     widget: select
     options:
-    <% `sacctmgr show -PQrn associations User=${USER} | cut -d '|' -f 18 | sort -u`.split(",").each do |val| %>
-      - ["<%= val %>", "<%= val %>"]
-    <% end %>
+    <%- qos.each do |q| -%>
+      - [ "<%= q %>", "<%= q %>" ]
+    <%- end -%>
+  <%- end -%>
     required: true
 
 
