@@ -5,8 +5,9 @@
 # https://www.rc.virginia.edu/userinfo/howtos/rivanna/launch-rserver/
 
 # Load the required environment
-module load singularityCE
-export SINGULARITY_BIND="/project,/opt,/local,/90daydata,$TMPDIR"
+#module load singularityCE
+module --ignore_cache load apptainer 
+export APPTAINER_BIND="/project,/opt,/local,/90daydata,$TMPDIR"
 
 #
 # Start RStudio Server
