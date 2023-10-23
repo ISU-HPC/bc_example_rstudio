@@ -36,3 +36,7 @@ script:
     - "--mem=<%= mem_req %>" 
     - "--job-name=<%= job_name %>"
     - "--qos=<%= slurm_qos.delete(' ') %>"
+    <%- extra_arguments.split.each do |e| -%>
+    - "<%= e %>"
+    <%- end -%>
+
