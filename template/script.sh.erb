@@ -30,6 +30,7 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
 
   # Set R_LIBS_USER to a path specific to rocker/rstudio to avoid conflicts with
   # personal libraries from any R installation in the host environment
+  export R_LIBS_USER="~/R/RStudio-%p-library/%v"
   mkdir -p ${R_LIBS_USER}
 
   # Change RStudio state/config dirs
@@ -101,6 +102,7 @@ if [ <%= context.version %> = "3.6.0" ]; then
     		-B $TMPDIR/var/lib:/var/lib/rstudio-server \
     		-B $TMPDIR/var/run:/var/run/rstudio-server \
     		-B $TMPDIR/tmp:/tmp \
+                -B /dev/null:${HOME}/.Renviron \
     		"$RSTUDIO_SERVER_IMAGE" \
     		rserver \
     		--www-port "${port}" \
@@ -116,6 +118,7 @@ else
     		-B $TMPDIR/var/lib:/var/lib/rstudio-server \
     		-B $TMPDIR/var/run:/var/run/rstudio-server \
     		-B $TMPDIR/tmp:/tmp \
+                -B /dev/null:${HOME}/.Renviron \
     		"$RSTUDIO_SERVER_IMAGE" \
     		rserver \
     		--www-port "${port}" \
