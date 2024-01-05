@@ -20,7 +20,6 @@
 #     cluster: "owens"
 cluster: 
   - "ceres"
-  - "ceres-dev"
 
 # Define attribute values that aren't meant to be modified by the user within
 # the Dashboard form
@@ -129,6 +128,7 @@ attributes:
     widget: "select"
     label: "R Version"
     options:
+      - ["4.3.2-Testing-Only", "4.3.2"]
       - ["4.2.3-EL9-dev", "4.2.3"]
       - ["4.2.0", "4.2.0"]
       - ["4.1.0", "4.1.0"]
