@@ -18,6 +18,7 @@ export RSTUDIO_AUTH="${PWD}/bin/auth"
 
 # Generate an `rsession` wrapper script
 export RSESSION_WRAPPER_FILE="${PWD}/rsession.sh"
+if [ <%= context.version %> = "4.3.2" ]; then
 (
 umask 077
 sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
@@ -63,6 +64,54 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
 
 EOL
 )
+else
+
+(
+umask 077
+sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
+  #!/usr/bin/env bash
+
+  # Set OMP_NUM_THREADS to prevent OpenBLAS (and any other OpenMP-enhanced
+  # libraries used by R) from spawning more threads than the number of processors
+  # allocated to the job.
+  export OMP_NUM_THREADS=${SLURM_JOB_CPUS_PER_NODE}
+
+  # Set R_LIBS_USER to a path specific to rocker/rstudio to avoid conflicts with
+  # personal libraries from any R installation in the host environment
+  # export R_LIBS_USER="~/R/RStudio-%p-library/%v"
+  mkdir -p ${R_LIBS_USER}
+
+  # Change RStudio state/config dirs
+  # https://docs.rstudio.com/ide/server-pro/r_sessions/customizing_session_settings.html
+  export XDG_DATA_HOME=${WORK_DIR}/.ondemand/${USER}/share
+  mkdir -p ${XDG_DATA_HOME}
+  export XDG_CONFIG_HOME=${WORK_DIR}/.ondemand/${USER}/config
+  mkdir -p ${XDG_CONFIG_HOME}
+  export XDG_STATE_HOME=${WORK_DIR}/.ondemand/${USER}/state
+  mkdir -p ${XDG_STATE_HOME}
+
+  # copy in work directory
+  export WORK_DIR=${WORK_DIR}
+
+  # Do not suspend idle sessions.
+  # Alternative to setting session-timeout-minutes=0 in /etc/rstudio/rsession.conf
+  # https://github.com/rstudio/rstudio/blob/v1.4.1106/src/cpp/server/ServerSessionManager.cpp#L126
+  export RSTUDIO_SESSION_TIMEOUT=0
+
+  # Log all output from this script
+  export RSESSION_LOG_FILE="${PWD}/rsession.log"
+
+  exec &>>"\${RSESSION_LOG_FILE}"
+
+  # Launch the original command
+  echo "Launching rsession..."
+  set -x
+  exec /usr/lib/rstudio-server/bin/rsession --r-libs-user "${R_LIBS_USER}" \
+                "\${@}" \
+
+EOL
+)
+fi
 chmod 700 "${RSESSION_WRAPPER_FILE}"
 
 # Set working directory
