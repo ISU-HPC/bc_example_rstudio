@@ -56,31 +56,6 @@ attributes:
     <%- end -%>
   <%- end -%>
 
-#  slurm_account:
-#    widget: select
-#    label: "Account"
-#    options:
-#    <% `sacctmgr show -PQrn associations User=${USER} | cut -d '|' -f 2`.split("\n").each do |val| %>
-#      - ["<%= val %>", "<%= val %>"]
-#    <% end %>
-#    required: true
-#
-#  # Can't simply call this partition, b/c that's got special meaning to ruby
-#  slurm_partition:
-#    value: short
-#    widget: select
-#    label: "Slurm Partition"
-#    help: |
-#      **Priority partitions available only to those users who purchased nodes**
-#    options:
-#    <% `/usr/bin/sinfo -ho "%R,%l"`.split("\n").each do |val| %>
-#    <%  p = val.split(",")[0] %>
-#    <%  pp = val.split(",")[0].ljust(24,'-') %>
-#    <%  t = val.split(",")[1].rjust(24) %>
-#      - [ " <%= pp %>-- Max Time: <%= t %>" , "<%= p %>"]
-#    <% end %>
-#    required: true
-
   bc_num_slots: "1"
 
   num_cores:
@@ -97,7 +72,7 @@ attributes:
 
   mem_req:
     label: "Memory required"
-    help: "If no unit specified, Megabytes.  Can use 'k', 'M', 'G' suffixes.  NO DECIMALS.  Example: 3072M"
+    help: "Specified as a whole number (no decimals) followed by a unit; e.g., 'M' (megabytes) or 'G' (gigabytes). Example: '16G' to request 16 gigabytes."
     widget: text_field
     value: "6000M"
 
@@ -136,7 +111,7 @@ attributes:
       - ["3.6.0", "3.6.0"]
 
   extra_arguments:
-       label: "Extra Optional Slurm Arguments"
+       label: "Optional Slurm Arguments"
        help: "Provide extra arguments for Slurm here. Examples: --mail-type=BEGIN,END,FAIL --mail-user=username@usda.gov --begin=now+1hour"
        widget: text_field
        value: ""
@@ -159,5 +134,5 @@ form:
   - bc_num_slots
   - num_cores
   - mem_req
-  - job_name
+  #- job_name    # Per VRSC-13520
   - extra_arguments
