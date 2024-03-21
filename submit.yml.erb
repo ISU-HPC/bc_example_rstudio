@@ -31,6 +31,7 @@ script:
   queue_name: "<%= custom_queue.delete(' ') %>"
   accounting_id: "<%= slurm_account.delete(' ') %>"
   native:
+    - "--nodes=1"
     - "-n"
     - "<%= num_cores.blank? ? 1 : num_cores.to_i %>"
     <%- if custom_queue == "gpu" -%>
