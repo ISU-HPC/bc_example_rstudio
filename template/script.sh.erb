@@ -5,9 +5,9 @@
 # https://www.rc.virginia.edu/userinfo/howtos/rivanna/launch-rserver/
 
 # Load the required environment
-module load rstudio-server/<%= context.version %>
-export SINGULARITY_BIND="/shared,/opt,/local,/ptmp,/scratch,/work"
-export RSTUDIO_SERVER_IMAGE="/shared/hpc/containers/Rstudio/4.1.0/rocker-geospatial.sif"
+module load apptainer 
+export APPTAINER_BIND="/shared,/opt,/local,/ptmp,/scratch,/work"
+export RSTUDIO_SERVER_IMAGE="/shared/hpc/containers/Rstudio/<%= context.version %>/rocker-geospatial.sif"
 
 #
 # Start RStudio Server
@@ -58,7 +58,7 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   # Launch the original command
   echo "Launching rsession..."
   set -x
-  exec rsession --r-libs-user "${R_LIBS_USER}" \
+  exec /usr/lib/rstudio-server/bin/rsession --r-libs-user "${R_LIBS_USER}" \
                 "\${@}" \
 
 EOL
@@ -90,7 +90,7 @@ set -x
 # Launch the RStudio Server
 echo "Starting up rserver..."
 
-singularity exec \
+apptainer exec \
     -B $TMPDIR/var/lib:/var/lib/rstudio-server \
     -B $TMPDIR/var/run:/var/run/rstudio-server \
     -B $TMPDIR/tmp:/tmp \
@@ -101,6 +101,9 @@ singularity exec \
     --auth-none 0 \
     --auth-pam-helper-path "${RSTUDIO_AUTH}" \
     --auth-encrypt-password 0 \
+    --server-user "${USER}" \
+    --auth-timeout-minutes=0 \
+    --auth-stay-signed-in-days=30 \
     --rsession-path "${RSESSION_WRAPPER_FILE}"
 
 
