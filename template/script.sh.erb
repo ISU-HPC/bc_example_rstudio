@@ -75,6 +75,7 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   mkdir -p ${XDG_STATE_HOME}
 
   export SLURM_EXPORT_ENV=HOME,SHELL,TERM,MODULEPATH
+  SBATCH_EXPORT=NONE
 
   # copy in work directory
   export WORK_DIR=${WORK_DIR}
