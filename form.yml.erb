@@ -89,10 +89,11 @@ attributes:
     value: "rstudio"
     widget: text_field
 
-
-
-
-
+  extra_arguments:
+       label: "Optional Slurm Arguments"
+       help: "Arguments such as --exclusive or --job-name can be specified here."
+       widget: text_field
+       value: ""
 
 # All of the attributes that make up the Dashboard form (in respective order),
 # and made available to the submit configuration file and the template ERB
@@ -112,3 +113,4 @@ form:
   - bc_num_slots
   - mem_req
   - job_name
+  - extra_arguments
