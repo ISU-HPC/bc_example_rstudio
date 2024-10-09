@@ -39,3 +39,6 @@ script:
     <%- end -%>
     - "--job-name=<%= job_name %>"
     - "--mem=<%= mem_req %>"
+    <%- extra_arguments.split.each do |e| -%>
+    - "<%= e %>"
+    <%- end -%>
