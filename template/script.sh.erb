@@ -1,45 +1,8 @@
 #!/usr/bin/env bash
 
-# borrows from
-# https://www.rocker-project.org/use/singularity/
-# https://www.rc.virginia.edu/userinfo/howtos/rivanna/launch-rserver/
-
-# Load the required environment
-module use /software/el9/modulefiles
-module load apptainer
-#export SINGULARITY_BIND="/project,/opt,/local,/90daydata,$TMPDIR"
-#
-export SINGULARITY_BIND=$(tr '\n' ',' <<END
-/bin/sacct
-/bin/salloc
-/bin/sbatch
-/bin/scancel
-/bin/scontrol
-/bin/scrontab
-/bin/sinfo
-/bin/squeue
-/bin/srun
-/bin/sshare
-/bin/sstat
-/etc/nsswitch.conf
-/etc/passwd
-/etc/slurm
-/etc/sssd
-/lib64/libnss_sss.so.2:/lib/libnss_sss.so.2
-/run/munge
-/system
-/usr/lib64/libmunge.so.2
-/usr/lib64/slurm
-/var/lib/sss
-/etc/profile.d
-/usr/share/lmod
-/project
-/opt
-/local
-/90daydata
-$TMPDIR
-END
-)
+module purge
+module use /software/el9/spack/lmod/Core
+module load r/<%= context.version %>
 
 #
 # Start RStudio Server
@@ -62,7 +25,7 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
 
   # Set R_LIBS_USER to a path specific to rocker/rstudio to avoid conflicts with
   # personal libraries from any R installation in the host environment
-  export R_LIBS_USER="~/R/RStudio-%p-library/%v"
+  export R_LIBS_USER="~/R/RStudio-beta-%p-library/%v"
   mkdir -p ${R_LIBS_USER}
 
   # Change RStudio state/config dirs
@@ -73,9 +36,6 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   mkdir -p ${XDG_CONFIG_HOME}
   export XDG_STATE_HOME=${WORK_DIR}/.ondemand/${USER}/state
   mkdir -p ${XDG_STATE_HOME}
-
-  export SLURM_EXPORT_ENV=HOME,SHELL,TERM,MODULEPATH
-  SBATCH_EXPORT=NONE
 
   # copy in work directory
   export WORK_DIR=${WORK_DIR}
@@ -93,12 +53,25 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   # Launch the original command
   echo "Launching rsession..."
   set -x
-  exec /usr/lib/rstudio-server/bin/rsession --r-libs-user "${R_LIBS_USER}" \
+  exec /software/el9/apps/rstudio-server/2024.12.1/bin/rsession --r-libs-user "${R_LIBS_USER}" \
                 "\${@}" \
 
 EOL
 )
 chmod 700 "${RSESSION_WRAPPER_FILE}"
+
+# Generate a database.conf file
+export DBCONF="${TMPDIR}/database.conf"
+(
+umask 077
+sed 's/^ \{2\}//' > "${DBCONF}" << EOL
+  # set database location
+  provider=sqlite
+  directory=${TMPDIR}/rstudio-server/db
+EOL
+)
+chmod 700 "${DBCONF}"
+
 
 # Set working directory
 cd "${WORK_DIR}"
@@ -125,46 +98,13 @@ set -x
 # Launch the RStudio Server
 echo "Starting up rserver..."
 
-echo Hot wired
-RSTUDIO_SERVER_IMAGE=/reference/containers/RStudio/<%= context.version %>/rocker-geospatial.sif
-#RSTUDIO_SERVER_IMAGE=/reference/containers/RStudio/4.1.2/rocker_4.1.2.sif
-#-B ${RPROFILE_SITE}:/usr/local/lib/R/etc/Rprofile.site \
-
-if [ <%= context.version %> = "3.6.0" ]; then
-
-
-	singularity exec \
-    		-B $TMPDIR/var/lib:/var/lib/rstudio-server \
-    		-B $TMPDIR/var/run:/var/run/rstudio-server \
-    		-B $TMPDIR/tmp:/tmp \
-                -B /dev/null:${HOME}/.Renviron \
-    		"$RSTUDIO_SERVER_IMAGE" \
-    		rserver \
-    		--www-port "${port}" \
-    		--auth-none 0 \
-    		--auth-pam-helper-path "${RSTUDIO_AUTH}" \
-    		--auth-encrypt-password 0 \
-    		--server-user "${USER}" \
-    		--rsession-path "${RSESSION_WRAPPER_FILE}"
-
-else
-
-	singularity exec \
-    		-B $TMPDIR/var/lib:/var/lib/rstudio-server \
-    		-B $TMPDIR/var/run:/var/run/rstudio-server \
-    		-B $TMPDIR/tmp:/tmp \
-                -B /dev/null:${HOME}/.Renviron \
-    		"$RSTUDIO_SERVER_IMAGE" \
-    		rserver \
-    		--www-port "${port}" \
-    		--auth-none 0 \
-    		--auth-pam-helper-path "${RSTUDIO_AUTH}" \
-    		--auth-encrypt-password 0 \
-    		--server-user "${USER}" \
-    		--auth-timeout-minutes=0 \
-    		--auth-stay-signed-in-days=30 \
-    		--rsession-path "${RSESSION_WRAPPER_FILE}"
-
-fi
-
-echo 'Singularity as exited...'
+/software/el9/apps/rstudio-server/2024.12.1/bin/rserver \
+  --www-port ${port} \
+  --auth-none 0 \
+  --auth-pam-helper-path "${RSTUDIO_AUTH}" \
+  --auth-encrypt-password 0 \
+  --rsession-path "${RSESSION_WRAPPER_FILE}" \
+  --server-data-dir "${TMPDIR}" \
+  --secure-cookie-key-file "${TMPDIR}/rstudio-server/secure-cookie-key" \
+  --database-config-file "${DBCONF}" \
+  --server-user "${USER}"
