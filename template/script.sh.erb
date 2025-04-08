@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
 
-# borrows from
-# https://www.rocker-project.org/use/singularity/
-# https://www.rc.virginia.edu/userinfo/howtos/rivanna/launch-rserver/
+module purge
+module load r/<%= context.version %> 
 
-# Load the required environment
-module load apptainer 
-export APPTAINER_BIND="/shared,/opt,/local,/ptmp,/scratch,/work"
-export RSTUDIO_SERVER_IMAGE="/shared/hpc/containers/Rstudio/<%= context.version %>/rocker-geospatial.sif"
 
 #
 # Start RStudio Server
@@ -30,7 +25,7 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
 
   # Set R_LIBS_USER to a path specific to rocker/rstudio to avoid conflicts with
   # personal libraries from any R installation in the host environment
-  export R_LIBS_USER=${WORK_DIR}/.ondemand/${USER}/rstudio/libs/<%= context.version %>
+  export R_LIBS_USER=${WORK_DIR}/.ondemand/${USER}/rstudio-beta/libs/<%= context.version %>
   mkdir -p ${R_LIBS_USER}
 
   # Change RStudio state/config dirs
@@ -58,12 +53,24 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   # Launch the original command
   echo "Launching rsession..."
   set -x
-  exec /usr/lib/rstudio-server/bin/rsession --r-libs-user "${R_LIBS_USER}" \
+  exec /shared/hpc/rstudio-server/2024.12.1-563/bin/rsession --r-libs-user "${R_LIBS_USER}" \
                 "\${@}" \
 
 EOL
 )
 chmod 700 "${RSESSION_WRAPPER_FILE}"
+
+# Generate a database.conf file
+export DBCONF="${TMPDIR}/database.conf"
+(
+umask 077
+sed 's/^ \{2\}//' > "${DBCONF}" << EOL
+  # set database location
+  provider=sqlite
+  directory=${TMPDIR}/rstudio-server/db
+EOL
+)
+chmod 700 "${DBCONF}"
 
 # Set working directory
 cd "${WORK_DIR}"
@@ -90,21 +97,15 @@ set -x
 # Launch the RStudio Server
 echo "Starting up rserver..."
 
-apptainer exec \
-    -B $TMPDIR/var/lib:/var/lib/rstudio-server \
-    -B $TMPDIR/var/run:/var/run/rstudio-server \
-    -B $TMPDIR/tmp:/tmp \
-    -B ${RPROFILE_SITE}:/usr/local/lib/R/etc/Rprofile.site \
-    "$RSTUDIO_SERVER_IMAGE" \
-    rserver \
-    --www-port "${port}" \
-    --auth-none 0 \
-    --auth-pam-helper-path "${RSTUDIO_AUTH}" \
-    --auth-encrypt-password 0 \
-    --server-user "${USER}" \
-    --auth-timeout-minutes=0 \
-    --auth-stay-signed-in-days=30 \
-    --rsession-path "${RSESSION_WRAPPER_FILE}"
+/shared/hpc/rstudio-server/2024.12.1-563/bin/rserver \
+  --www-port ${port} \
+  --auth-none 0 \
+  --auth-pam-helper-path "${RSTUDIO_AUTH}" \
+  --auth-encrypt-password 0 \
+  --rsession-path "${RSESSION_WRAPPER_FILE}" \
+  --server-data-dir "${TMPDIR}" \
+  --secure-cookie-key-file "${TMPDIR}/rstudio-server/secure-cookie-key" \
+  --database-config-file "${DBCONF}" \
+  --server-user "${USER}"
 
 
-echo 'Singularity as exited...'
