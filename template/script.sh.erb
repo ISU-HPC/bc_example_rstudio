@@ -28,6 +28,10 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   export R_LIBS_USER=${WORK_DIR}/.ondemand/${USER}/rstudio-beta/libs/<%= context.version %>
   mkdir -p ${R_LIBS_USER}
 
+  # Set TMPDIR and MODULEPATH
+  export TMPDIR=${TMPDIR}
+  export MODULEPATH=${MODULEPATH}
+
   # Change RStudio state/config dirs
   # https://docs.rstudio.com/ide/server-pro/r_sessions/customizing_session_settings.html
   export XDG_DATA_HOME=${WORK_DIR}/.ondemand/${USER}/share
@@ -74,9 +78,6 @@ chmod 700 "${DBCONF}"
 
 # Set working directory
 cd "${WORK_DIR}"
-
-# Make temporary directory
-export TMPDIR="$(mktemp -d)"
 
 mkdir -p "$TMPDIR/tmp/rstudio-server"
 python -c 'from uuid import uuid4; print(uuid4())' > "$TMPDIR/tmp/rstudio-server/secure-cookie-key"
