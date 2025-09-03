@@ -52,6 +52,12 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   # Log all output from this script
   export RSESSION_LOG_FILE="${PWD}/rsession.log"
 
+  # source user customizable environment
+  if [[ -f ${HOME}/rstudio-session.sh ]]
+  then
+    source ${HOME}/rstudio-session.sh
+  fi
+
   exec &>>"\${RSESSION_LOG_FILE}"
 
   # Launch the original command
