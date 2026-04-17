@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 module purge
-module load r/<%= context.version %> 
+module load r/<%= context.version %>
 
 
 #
@@ -43,6 +43,8 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
 
   # copy in work directory
   export WORK_DIR=${WORK_DIR}
+
+  export LMOD_PKG=${LMOD_PKG}
 
   # Do not suspend idle sessions.
   # Alternative to setting session-timeout-minutes=0 in /etc/rstudio/rsession.conf
