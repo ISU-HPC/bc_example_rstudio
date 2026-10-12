@@ -23,6 +23,9 @@ batch_connect:
   #
   #set_host: "host=$(hostname -A | awk '{print $2}')"
 
+# Hostname order isnt constant, forcing -eth version DLO 3-mar-2025
+set_host: "host=$(hostname -A | sed -e 's/ /\n/' | grep eth)"
+
 #
 # Configure the job script submission parameters for the batch job here
 # @see http://www.rubydoc.info/gems/ood_core/OodCore/Job/Script
