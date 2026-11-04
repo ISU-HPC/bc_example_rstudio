@@ -36,6 +36,15 @@ sed 's/^ \{2\}//' > "${RSESSION_WRAPPER_FILE}" << EOL
   export TMPDIR=/tmp
   export MODULEPATH=${MODULEPATH}
 
+  . /etc/profile.d/modules.sh
+  <%
+    require 'shellwords'
+    extra_modules = context.extra_modules.to_s.split
+  %>
+  <% extra_modules.each do |mod| %>
+    module load <%= Shellwords.escape(mod) %>
+  <% end %>
+
   # Change RStudio state/config dirs
   # https://docs.rstudio.com/ide/server-pro/r_sessions/customizing_session_settings.html
   export XDG_DATA_HOME=${WORK_DIR}/.ondemand/${USER}/share

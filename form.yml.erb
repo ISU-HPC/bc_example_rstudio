@@ -94,6 +94,12 @@ attributes:
     <%- end -%>
   <%- end -%>
 
+  extra_modules:
+    label: "Additional modules"
+    help: "Provide additional modules to load when RStudio starts in a space-separated list. Example: gcc samtools/1.17. See [Clusters → Module Browser](https://ceres-ondemand.scinet.usda.gov/pun/sys/dashboard/module-browser) for available modules."
+    widget: text_field
+    value: ""
+
 
 
   version:
@@ -132,4 +138,5 @@ form:
   - mem_req
   #- job_name    # Per VRSC-13520
   - extra_arguments
+  - extra_modules
   - bc_email_on_started
