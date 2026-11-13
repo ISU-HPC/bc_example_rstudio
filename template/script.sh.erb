@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
 module purge
-module use /software/el9/spack/lmod/Core
+
+if [ "<%= context.version %>" = "4.4.2" ]; then
+  module use /software/el9/spack/lmod/Core
+fi
+
 module load r/<%= context.version %>
 
 #
